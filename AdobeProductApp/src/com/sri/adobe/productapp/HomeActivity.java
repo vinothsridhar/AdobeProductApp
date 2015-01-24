@@ -1,19 +1,24 @@
 package com.sri.adobe.productapp;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnAttachStateChangeListener;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Filter.FilterListener;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -21,7 +26,7 @@ import android.widget.ProgressBar;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.MenuItem.OnMenuItemClickListener;
+import com.actionbarsherlock.widget.SearchView;
 import com.sri.adobe.productapp.adapters.ProductListAdapter;
 import com.sri.adobe.productapp.api.AsyncConnection;
 import com.sri.adobe.productapp.api.ConnectionListener;
@@ -43,6 +48,7 @@ public class HomeActivity extends BaseActivity {
 	private TextAwesome networkError;
 	private ButtonAwesome refreshButton;
 	private ProductListAdapter productListAdapter;
+	private SearchView searchProduct;
 
 	@Override
 	protected void onResume() {
@@ -98,7 +104,7 @@ public class HomeActivity extends BaseActivity {
 				try {
 					JSONArray jArray = new JSONArray(result);
 					productList = new ArrayList<Product>();
-					for (int i=0; i<jArray.length(); i++) {
+					for (int i = 0; i < jArray.length(); i++) {
 						JSONObject jobj = jArray.getJSONObject(i);
 						if (!jobj.optString(JSONKeys.NAME).equals("")) {
 							productList.add(new Product(jobj));
@@ -154,16 +160,85 @@ public class HomeActivity extends BaseActivity {
 		}
 	};
 
+	@SuppressLint("NewApi")
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater menuInflater = new MenuInflater(this);
+		MenuInflater menuInflater = getSupportMenuInflater();
 		menuInflater.inflate(R.menu.menu, menu);
+
+		searchProduct = (SearchView) menu.findItem(R.id.action_search).getActionView();
+		searchProduct.setQueryHint("Search Product");
+
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB_MR1) {
+			OnAttachStateChangeListener onAttachStateChangeListener = new OnAttachStateChangeListener() {
+				@Override
+				public void onViewAttachedToWindow(View v) {
+					// Do Nothing
+				}
+
+				@Override
+				public void onViewDetachedFromWindow(View v) {
+					productListView.setVisibility(View.GONE);
+					searchProduct.setQuery("", false);
+					showProductList();
+				}
+			};
+			searchProduct.addOnAttachStateChangeListener(onAttachStateChangeListener);
+		} else {
+			// TODO: Handle this for older versions
+			// To replicate, on an Android API thats old enough, make a search
+			// using the filter, then
+			// click the Passport logo in the top left. The filter says active.
+		}
+		
+		SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+
+		if (null != searchProduct) {
+			searchProduct.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+			searchProduct.setIconifiedByDefault(false);
+		}
+
+		searchProduct.setOnQueryTextListener(queryTextListener);
+
 		return super.onCreateOptionsMenu(menu);
+	}
+	
+	private SearchView.OnQueryTextListener queryTextListener = new SearchView.OnQueryTextListener() {
+		@Override
+		public boolean onQueryTextChange(String filterText) {
+			if(filterText != null){
+				filter(filterText, false);
+			}
+			return true;
+		}
+
+		@Override
+		public boolean onQueryTextSubmit(String query) {
+			if(query != null){
+				filter(query, false);
+			}
+			return true;
+		}
+	};
+	
+	private void filter(String filterText, boolean fromPubNub) {
+		try{
+			FilterListener filterListener = new FilterListener() {
+	            @Override
+	            public void onFilterComplete(int count) {
+	               
+	            }
+	        };
+
+	        productListAdapter.getFilter().filter(filterText, filterListener);
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch(item.getItemId()) {
+		switch (item.getItemId()) {
 		case R.id.action_sort_by_inapp:
 			if (productList == null) {
 				return false;
