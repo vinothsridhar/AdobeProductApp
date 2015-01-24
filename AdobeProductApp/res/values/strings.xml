@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AdobeProductApp</string>
+    <string name="network_error">&#xf071; %1$s</string>
+    <string name="refresh_text">&#xf021; %1$s</string>
+    <string name="inapp_text">&#xf0d6; In-App: %1$s</string>
+    <string name="product_inapp_text">&#xf0d6; In-App Purchases</string>
+    <string name="product_storeurl">&#xf0c1; play store</string>
+    <string name="product_share_app">&#xf1e0; share via app</string>
+    <string name="product_share_sms">&#xf10b; share via SMS</string>
+    <string name="action_search">Search</string>
+    <string name="action_sort">Sort</string>
+    <string name="sort_by_inapp">In-app purchases</string>
+    <string name="sort_by_rating">Rating</string>
+
+</resources>
